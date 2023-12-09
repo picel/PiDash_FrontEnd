@@ -13,4 +13,10 @@ Pi Dash 백엔드에서 제공되는 정보를 수신해서 보여줌
     - wakelock
 
 ## 실행 화면
-![PiDashMain](https://github.com/picel/PiDash_FrontEnd/assets/30901178/5b7a50ac-bc39-4d00-b4bf-c54fdefc8439)
+![image](https://github.com/picel/PiDash_BackEnd/assets/30901178/c12b5423-0247-4513-907b-a554deed9a46)
+![image](https://github.com/picel/PiDash_FrontEnd/assets/30901178/5b7a50ac-bc39-4d00-b4bf-c54fdefc8439)
+
+## ToDo
+1. HTTP API 활용 화면 제작
+2. 버그 수정 (연결 실패 시 동작)
+3. 리팩토링...
