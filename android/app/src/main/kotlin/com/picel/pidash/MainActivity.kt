@@ -1,4 +1,4 @@
-package com.example.pi_dash
+package com.picel.pidash
 
 import io.flutter.embedding.android.FlutterActivity
 
