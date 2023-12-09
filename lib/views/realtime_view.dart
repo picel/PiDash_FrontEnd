@@ -207,7 +207,7 @@ class _RealTimeViewState extends State<RealTimeView> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'CPU ${isAlive ? 'Alive' : 'Dead'}',
+                          'CPU',
                           style: TextStyle(
                             fontSize: MediaQuery.of(context).size.height * 0.04,
                             fontWeight: FontWeight.bold,
