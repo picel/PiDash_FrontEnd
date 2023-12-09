@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pi_dash/views/realtime_view.dart';
 
 void main() {
   runApp(const Main());
+
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
 }
 
 class Main extends StatelessWidget {
