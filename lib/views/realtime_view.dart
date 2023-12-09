@@ -18,10 +18,10 @@ class RealTimeView extends StatefulWidget {
 }
 
 class _RealTimeViewState extends State<RealTimeView> {
-  final WSService _cpuWebScoket = WSService('/cpu');
-  final WSService _gpuWebScoket = WSService('/gpu');
-  final WSService _memWebScoket = WSService('/mem');
-  final WSService _netWebScoket = WSService('/net');
+  final WSService _cpuWebSocket = WSService('/cpu');
+  final WSService _gpuWebSocket = WSService('/gpu');
+  final WSService _memWebSocket = WSService('/mem');
+  final WSService _netWebSocket = WSService('/net');
 
   List cpuData = [];
   double cpuAvg = 0.0;
@@ -31,7 +31,7 @@ class _RealTimeViewState extends State<RealTimeView> {
   MemStatModel memData = MemStatModel.empty();
   NetStatModel netData = NetStatModel.empty();
 
-  showDialogBox() {
+  showDialogBox(bool isFirst) {
     showDialog(
       barrierDismissible: false,
       context: context,
@@ -40,9 +40,7 @@ class _RealTimeViewState extends State<RealTimeView> {
           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
           child: AlertDialog(
             backgroundColor: Colors.white,
-            title: Text(
-              'Connection Lost',
-            ),
+            title: Text((isFirst) ? 'Start Stream' : 'Reconnect Stream'),
             actions: [
               TextButton(
                 onPressed: () {
@@ -53,7 +51,11 @@ class _RealTimeViewState extends State<RealTimeView> {
                   netFetch();
                 },
                 child: Text(
-                  'Retry',
+                  (isFirst) ? 'Start' : 'Reconnect',
+                  style: TextStyle(
+                    color: Colors.black.withOpacity(0.6),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -64,8 +66,7 @@ class _RealTimeViewState extends State<RealTimeView> {
   }
 
   cpuFetch() {
-    _cpuWebScoket.connect();
-    _cpuWebScoket.stream.listen(
+    _cpuWebSocket.stream.listen(
       (event) {
         var data = jsonDecode(event);
         setState(() {
@@ -80,19 +81,21 @@ class _RealTimeViewState extends State<RealTimeView> {
         });
       },
       onDone: () {
+        if (cpuData.length == 0)
+          showDialogBox(true);
+        else
+          showDialogBox(false);
         setState(() {
           cpuData = [];
           cpuAvg = 0.0;
           isAlive = false;
         });
-        showDialogBox();
       },
     );
   }
 
   gpuFetch() {
-    _gpuWebScoket.connect();
-    _gpuWebScoket.stream.listen(
+    _gpuWebSocket.stream.listen(
       (event) {
         var data = jsonDecode(event);
         setState(() {
@@ -110,8 +113,7 @@ class _RealTimeViewState extends State<RealTimeView> {
   }
 
   memFetch() {
-    _memWebScoket.connect();
-    _memWebScoket.stream.listen(
+    _memWebSocket.stream.listen(
       (event) {
         var data = jsonDecode(event);
         setState(() {
@@ -129,8 +131,7 @@ class _RealTimeViewState extends State<RealTimeView> {
   }
 
   netFetch() {
-    _netWebScoket.connect();
-    _netWebScoket.stream.listen(
+    _netWebSocket.stream.listen(
       (event) {
         var data = jsonDecode(event);
         setState(() {

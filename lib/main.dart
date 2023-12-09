@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pi_dash/views/init_view.dart';
 import 'package:pi_dash/views/realtime_view.dart';
 
 void main() {
@@ -21,7 +22,12 @@ class Main extends StatelessWidget {
             .colorScheme
             .copyWith(background: Color(0xffFFF7D4)),
       ),
-      home: RealTimeView(),
+      home: InitView(),
+      routes: {
+        '/init': (context) => InitView(),
+        '/realtime': (context) => RealTimeView(),
+      },
+      initialRoute: '/init',
     );
   }
 }
