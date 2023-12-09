@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 class InitView extends StatefulWidget {
   const InitView({super.key});
@@ -69,7 +70,33 @@ class _InitViewState extends State<InitView> {
                 ),
                 SizedBox(height: 10),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    // check ip and port accessable with http://ip:port/api/cpu
+                    var url = Uri.http(
+                        ipController.text + ':' + portController.text,
+                        '/api/cpu');
+                    var response = await http.get(url);
+                    if (response.statusCode != 200) {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text('Error'),
+                            content: Text(
+                                'Cannot connect to the server.\nPlease check your IP and Port.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Text('OK'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }
+
                     setSharedPrefs().then((value) {
                       Navigator.pushNamed(context, '/realtime');
                     });
