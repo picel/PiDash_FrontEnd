@@ -80,8 +80,11 @@ jobs:
       - name: Build macOS
         run: flutter build macos --release
 
+      - name: Simplify Directory
+        run: mkdir pidash_macos && mv build/macos/Build/Products/Release/pi_dash.app pidash_macos/
+
       - name: Zip macOS
-        run: 7z a -tzip pidash_macos.zip build/macos/Build/Products/Release/pi_dash.app
+        run: 7z a -tzip pidash_macos.zip pidash_macos/
 
       - name: Upload macOS
         uses: actions/upload-artifact@v2
