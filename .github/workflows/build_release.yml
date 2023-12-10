@@ -23,10 +23,10 @@ jobs:
       run: flutter build windows
 
     - name: Simplify Directory
-      run: mkdir windows && mv build/windows/x64/runner/Release/ windows/
+      run: mkdir pidash_windows && mv build/windows/x64/runner/Release/ pidash_windows/
             
     - name: Zip Windows
-      run: 7z a -tzip pidash_windows.zip windows/
+      run: 7z a -tzip pidash_windows.zip pidash_windows/
         
     - name: Upload Windows
       uses: actions/upload-artifact@v2
