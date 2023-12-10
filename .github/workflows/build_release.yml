@@ -80,14 +80,14 @@ jobs:
       - name: Build macOS
         run: flutter build macos --release
 
-      - name: Change File name
-        run: mv build/macos/Build/Products/Release/pi_dash.app pidash_macos.app
+      - name: Zip macOS
+        run: 7z a -tzip pidash_macos.zip build/macos/Build/Products/Release/pidash_macos.app
 
       - name: Upload macOS
         uses: actions/upload-artifact@v2
         with:
           name: macos
-          path: pidash_macos.app
+          path: pidash_macos.zip
 
   build-web-linux-and-apk:
     name: Build Web, Linux and APK
@@ -175,7 +175,7 @@ jobs:
           - os: ios
             asset_path: Payload.ipa
           - os: macos
-            asset_path: pidash_macos.app
+            asset_path: pidash_macos.zip
           - os: web
             asset_path: pidash_web.zip
           - os: linux
