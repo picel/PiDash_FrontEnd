@@ -22,15 +22,17 @@ jobs:
     - name: Build Windows
       run: flutter build windows
 
+    - name: Simplify Directory
+      run: mkdir windows && mv build/windows/x64/runner/Release/ windows/
             
     - name: Zip Windows
-      run: 7z a -tzip windows.zip build/windows/x64/runner/Release/
+      run: 7z a -tzip pidash_windows.zip windows/
         
     - name: Upload Windows
       uses: actions/upload-artifact@v2
       with:
         name: windows
-        path: windows.zip
+        path: pidash_windows.zip
 
   build-ios-and-macos:
     name: Build iOS and macOS
@@ -52,29 +54,26 @@ jobs:
         run: |
             mkdir Payload
             cp -r build/ios/iphoneos/Runner.app Payload/
-            zip -r Runner.ipa Payload/
+            zip -r Payload.ipa Payload/
             rm -rf Payload
-      
-      - name: Zip iOS
-        run: 7z a -tzip ios.zip Runner.ipa
 
       - name: Upload iOS
         uses: actions/upload-artifact@v2
         with:
           name: ios
-          path: ios.zip
+          path: Payload.ipa
 
       - name: Build macOS
         run: flutter build macos --release
 
-      - name: Zip macOS
-        run: 7z a -tzip macos.zip build/macos/Build/Products/Release/Runner.app
+      - name: Change File name
+        run: mv build/macos/Build/Products/Release/pi_dash.app pidash_macos.app
 
       - name: Upload macOS
         uses: actions/upload-artifact@v2
         with:
           name: macos
-          path: macos.zip
+          path: pidash_macos.app
 
   build-web-linux-and-apk:
     name: Build Web, Linux and APK
@@ -100,37 +99,37 @@ jobs:
             sed -i 's/href="href=".\//href="/g' build/web/index.html
             
       - name: Zip Web
-        run: 7z a -tzip web.zip build/web/
+        run: 7z a -tzip pidash_web.zip build/web/
             
       - name: Upload Web
         uses: actions/upload-artifact@v2
         with:
           name: web
-          path: web.zip
+          path: pidash_web.zip
     
       - name: Build Linux
         run: flutter build linux
 
       - name: Zip Linux
-        run: 7z a -tzip linux.zip build/linux/x64/release/bundle/
+        run: 7z a -tzip pidash_linux.zip build/linux/x64/release/bundle/
   
       - name: Upload Linux
         uses: actions/upload-artifact@v2
         with:
           name: linux
-          path: linux.zip
+          path: pidash_linux.zip
     
       - name: Build APK
         run: flutter build apk
 
-      - name: Zip APK
-        run: 7z a -tzip apk.zip build/app/outputs/flutter-apk/app-release.apk
+      - name: Change File name
+        run: mv build/app/outputs/flutter-apk/app-release.apk pidash_android.apk
   
       - name: Upload APK
         uses: actions/upload-artifact@v2
         with:
           name: apk
-          path: apk.zip
+          path: pidash_android.apk
       
   create-release:
     name: Create Release
@@ -156,7 +155,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [windows, ios, macos, web, linux, apk]
+        os: [pidash_windows.zip, Payload.ipa, pidash_macos.app, pidash_web.zip, pidash_linux.zip, pidash_android.apk]
     steps:
       - name: Download Assets
         uses: actions/download-artifact@v2
