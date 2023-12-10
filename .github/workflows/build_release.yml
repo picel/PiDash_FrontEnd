@@ -6,8 +6,8 @@ on:
       - 'v*.*.*'
 
 jobs:
-  build-windows:
-    name: Build Windows
+  build-windows-and-apk:
+    name: Build Windows and APK
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
@@ -21,6 +21,7 @@ jobs:
 
     - name: Build Windows
       run: flutter build windows
+
             
     - name: Zip Windows
       run: 7z a -tzip windows.zip build/windows/x64/runner/Release/
@@ -30,31 +31,18 @@ jobs:
       with:
         name: windows
         path: windows.zip
+    
+    - name: Build APK
+      run: flutter build apk
 
-  build-apk:
-    name: Build APK
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v1
-        with:
-          flutter-version: '3.16.3'
+    - name: Upload APK
+      uses: actions/upload-artifact@v2
+      with:
+        name: apk
+        path: build/app/outputs/flutter-apk/app-release.apk
 
-      - name: Get dependencies
-        run: flutter pub get
-
-      - name: Build APK
-        run: flutter build apk
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v2
-        with:
-          name: apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-
-  build-ios:
-    name: Build iOS
+  build-ios-and-macos:
+    name: Build iOS and macOS
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
@@ -81,19 +69,6 @@ jobs:
         with:
           name: ios
           path: Runner.ipa
-    
-  build-macos:
-    name: Build macOS
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v1
-        with:
-          flutter-version: '3.16.3'
-
-      - name: Get dependencies
-        run: flutter pub get
 
       - name: Build macOS
         run: flutter build macos --release
@@ -104,7 +79,7 @@ jobs:
           name: macos
           path: build/macos/Build/Products/Release/Runner.app
 
-  build-web:
+  build-web-and-linux:
     name: Build Web
     runs-on: ubuntu-latest
     steps:
@@ -114,13 +89,16 @@ jobs:
         with:
           flutter-version: '3.16.3'
 
+      - name: Install Ninja Build System
+        run: sudo apt-get install ninja-build
+
       - name: Get dependencies
         run: flutter pub get
 
       - name: Build Web
         run: flutter build web
               
-      - name: Fix index.html # add . to  href
+      - name: Fix index.html
         run: |
             sed -i 's/href="href=".\//href="/g' build/web/index.html
             
@@ -133,31 +111,18 @@ jobs:
           name: web
           path: web.zip
     
-  build-linux:
-    name: Build Linux
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v1
-        with:
-          flutter-version: '3.16.3'
-
-      - name: Get dependencies
-        run: flutter pub get
-
       - name: Build Linux
         run: flutter build linux
-
+  
       - name: Upload Linux
         uses: actions/upload-artifact@v2
         with:
           name: linux
           path: build/linux/x64/release/bundle/
-                
+      
   create-release:
     name: Create Release
-    needs: [build-windows, build-apk, build-ios, build-macos, build-web, build-linux]
+    needs: [build-windows-and-apk, build-ios-and-macos, build-web-and-linux]
     runs-on: ubuntu-latest
     steps:
     - name: Create Release
