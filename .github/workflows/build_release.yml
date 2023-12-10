@@ -48,27 +48,33 @@ jobs:
       - name: Build iOS
         run: flutter build ios --release --no-codesign
 
-      - name: Create IPA # put Runner.ipa to Payload and zip
+      - name: Create IPA
         run: |
             mkdir Payload
             cp -r build/ios/iphoneos/Runner.app Payload/
             zip -r Runner.ipa Payload/
             rm -rf Payload
+      
+      - name: Zip iOS
+        run: 7z a -tzip ios.zip Runner.ipa
 
       - name: Upload iOS
         uses: actions/upload-artifact@v2
         with:
           name: ios
-          path: Runner.ipa
+          path: ios.zip
 
       - name: Build macOS
         run: flutter build macos --release
+
+      - name: Zip macOS
+        run: 7z a -tzip macos.zip build/macos/Build/Products/Release/Runner.app
 
       - name: Upload macOS
         uses: actions/upload-artifact@v2
         with:
           name: macos
-          path: build/macos/Build/Products/Release/Runner.app
+          path: macos.zip
 
   build-web-linux-and-apk:
     name: Build Web, Linux and APK
@@ -104,21 +110,27 @@ jobs:
     
       - name: Build Linux
         run: flutter build linux
+
+      - name: Zip Linux
+        run: 7z a -tzip linux.zip build/linux/x64/release/bundle/
   
       - name: Upload Linux
         uses: actions/upload-artifact@v2
         with:
           name: linux
-          path: build/linux/x64/release/bundle/
+          path: linux.zip
     
       - name: Build APK
         run: flutter build apk
+
+      - name: Zip APK
+        run: 7z a -tzip apk.zip build/app/outputs/flutter-apk/app-release.apk
   
       - name: Upload APK
         uses: actions/upload-artifact@v2
         with:
           name: apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: apk.zip
       
   create-release:
     name: Create Release
