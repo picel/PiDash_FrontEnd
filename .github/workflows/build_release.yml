@@ -1,198 +1,198 @@
 name: Flutter CI/CD
 
 on:
-    push:
-        tags:
-            - 'v*.*.*'
+  push:
+    tags:
+      - 'v*.*.*'
 
 jobs:
-    build-windows:
-        name: Build Windows
-        runs-on: windows-latest
-        steps:
-            - uses: actions/checkout@v2
-            - name: Setup Flutter
-              uses: subosito/flutter-action@v1
-              with:
-                  flutter-version: '3.16.3'
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v1
+      with:
+          flutter-version: '3.16.3'
 
-            - name: Get dependencies
-              run: flutter pub get
+    - name: Get dependencies
+      run: flutter pub get
 
-            - name: Build Windows
-              run: flutter build windows
+    - name: Build Windows
+      run: flutter build windows
             
-            - name: Zip Windows
-              run: 7z a -tzip windows.zip build/windows/x64/runner/Release/
-              
-            - name: Upload Windows
-              uses: actions/upload-artifact@v2
-              with:
-                name: windows
-                path: windows.zip
+    - name: Zip Windows
+      run: 7z a -tzip windows.zip build/windows/x64/runner/Release/
+        
+    - name: Upload Windows
+      uses: actions/upload-artifact@v2
+      with:
+        name: windows
+        path: windows.zip
 
-    build-apk:
-        name: Build APK
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v2
-            - name: Setup Flutter
-              uses: subosito/flutter-action@v1
-              with:
-                  flutter-version: '3.16.3'
+  build-apk:
+    name: Build APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: '3.16.3'
 
-            - name: Get dependencies
-              run: flutter pub get
+      - name: Get dependencies
+        run: flutter pub get
 
-            - name: Build APK
-              run: flutter build apk
+      - name: Build APK
+        run: flutter build apk
 
-            - name: Upload APK
-              uses: actions/upload-artifact@v2
-              with:
-                  name: apk
-                  path: build/app/outputs/flutter-apk/app-release.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v2
+        with:
+          name: apk
+          path: build/app/outputs/flutter-apk/app-release.apk
 
-    build-ios:
-        name: Build iOS
-        runs-on: macos-latest
-        steps:
-            - uses: actions/checkout@v2
-            - name: Setup Flutter
-              uses: subosito/flutter-action@v1
-              with:
-                  flutter-version: '3.16.3'
+  build-ios:
+    name: Build iOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: '3.16.3'
 
-            - name: Get dependencies
-              run: flutter pub get
+      - name: Get dependencies
+        run: flutter pub get
 
-            - name: Build iOS
-              run: flutter build ios --release --no-codesign
+      - name: Build iOS
+        run: flutter build ios --release --no-codesign
 
-            - name: Create IPA # put Runner.ipa to Payload and zip
-              run: |
-                    mkdir Payload
-                    cp -r build/ios/iphoneos/Runner.app Payload/
-                    zip -r Runner.ipa Payload/
-                    rm -rf Payload
+      - name: Create IPA # put Runner.ipa to Payload and zip
+        run: |
+            mkdir Payload
+            cp -r build/ios/iphoneos/Runner.app Payload/
+            zip -r Runner.ipa Payload/
+            rm -rf Payload
 
-            - name: Upload iOS
-              uses: actions/upload-artifact@v2
-              with:
-                name: ios
-                path: Runner.ipa
+      - name: Upload iOS
+        uses: actions/upload-artifact@v2
+        with:
+          name: ios
+          path: Runner.ipa
     
-    build-macos:
-        name: Build macOS
-        runs-on: macos-latest
-        steps:
-            - uses: actions/checkout@v2
-            - name: Setup Flutter
-              uses: subosito/flutter-action@v1
-              with:
-                  flutter-version: '3.16.3'
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: '3.16.3'
 
-            - name: Get dependencies
-              run: flutter pub get
+      - name: Get dependencies
+        run: flutter pub get
 
-            - name: Build macOS
-              run: flutter build macos --release
+      - name: Build macOS
+        run: flutter build macos --release
 
-            - name: Upload macOS
-              uses: actions/upload-artifact@v2
-              with:
-                  name: macos
-                  path: build/macos/Build/Products/Release/Runner.app
+      - name: Upload macOS
+        uses: actions/upload-artifact@v2
+        with:
+          name: macos
+          path: build/macos/Build/Products/Release/Runner.app
 
-    build-web:
-        name: Build Web
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v2
-            - name: Setup Flutter
-              uses: subosito/flutter-action@v1
-              with:
-                  flutter-version: '3.16.3'
+  build-web:
+    name: Build Web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: '3.16.3'
 
-            - name: Get dependencies
-              run: flutter pub get
+      - name: Get dependencies
+        run: flutter pub get
 
-            - name: Build Web
-              run: flutter build web
+      - name: Build Web
+        run: flutter build web
               
-            - name: Fix index.html # add . to  href
-              run: |
-                    sed -i 's/href="href=".\//href="/g' build/web/index.html
+      - name: Fix index.html # add . to  href
+        run: |
+            sed -i 's/href="href=".\//href="/g' build/web/index.html
             
-            - name: Zip Web
-              run: 7z a -tzip web.zip build/web/
+      - name: Zip Web
+        run: 7z a -tzip web.zip build/web/
             
-            - name: Upload Web
-              uses: actions/upload-artifact@v2
-              with:
-                name: web
-                path: web.zip
+      - name: Upload Web
+        uses: actions/upload-artifact@v2
+        with:
+          name: web
+          path: web.zip
     
-    build-linux:
-        name: Build Linux
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v2
-            - name: Setup Flutter
-              uses: subosito/flutter-action@v1
-              with:
-                  flutter-version: '3.16.3'
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: '3.16.3'
 
-            - name: Get dependencies
-              run: flutter pub get
+      - name: Get dependencies
+        run: flutter pub get
 
-            - name: Build Linux
-              run: flutter build linux
+      - name: Build Linux
+        run: flutter build linux
 
-            - name: Upload Linux
-              uses: actions/upload-artifact@v2
-              with:
-                  name: linux
-                  path: build/linux/x64/release/bundle/
+      - name: Upload Linux
+        uses: actions/upload-artifact@v2
+        with:
+          name: linux
+          path: build/linux/x64/release/bundle/
                 
-    create-release:
-        name: Create Release
-        needs: [build-windows, build-apk, build-ios, build-macos, build-web, build-linux]
-        runs-on: ubuntu-latest
-        steps:
-            - name: Create Release
-              id: create_release
-              uses: actions/create-release@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  tag_name: ${{ github.ref }}
-                  release_name: Release ${{ github.ref }}
-                  draft: false
-                  prerelease: false
+  create-release:
+    name: Create Release
+    needs: [build-windows, build-apk, build-ios, build-macos, build-web, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
         
-        outputs:
-            upload_url: ${{ steps.create_release.outputs.upload_url }}
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
         
-    upload-assets:
-        needs: [create-release]
-        runs-on: ubuntu-latest
-        strategy:
-            matrix:
-                os: [windows, apk, ios, macos, web, linux]
-        steps:
-            - name: Download Assets
-              uses: actions/download-artifact@v2
-              with:
-                  name: ${{ matrix.os }}
-                  path: ${{ matrix.os }}
+  upload-assets:
+    needs: [create-release]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [windows, apk, ios, macos, web, linux]
+    steps:
+      - name: Download Assets
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.os }}
+          path: ${{ matrix.os }}
             
-            - name: Upload Release Asset
-              uses: actions/upload-release-asset@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  upload_url: ${{ needs.create-release.outputs.upload_url }}
-                  asset_path: ${{ matrix.os }}
-                  asset_name: ${{ matrix.os }}
-                  asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ${{ matrix.os }}
+          asset_name: ${{ matrix.os }}
+          asset_content_type: application/octet-stream
