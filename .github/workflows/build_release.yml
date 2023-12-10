@@ -6,8 +6,8 @@ on:
       - 'v*.*.*'
 
 jobs:
-  build-windows-and-apk:
-    name: Build Windows and APK
+  build-windows:
+    name: Build Windows
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
@@ -31,15 +31,6 @@ jobs:
       with:
         name: windows
         path: windows.zip
-    
-    - name: Build APK
-      run: flutter build apk
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v2
-      with:
-        name: apk
-        path: build/app/outputs/flutter-apk/app-release.apk
 
   build-ios-and-macos:
     name: Build iOS and macOS
@@ -79,8 +70,8 @@ jobs:
           name: macos
           path: build/macos/Build/Products/Release/Runner.app
 
-  build-web-and-linux:
-    name: Build Web and Linux
+  build-web-linux-and-apk:
+    name: Build Web, Linux and APK
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -119,10 +110,19 @@ jobs:
         with:
           name: linux
           path: build/linux/x64/release/bundle/
+    
+      - name: Build APK
+        run: flutter build apk
+  
+      - name: Upload APK
+        uses: actions/upload-artifact@v2
+        with:
+          name: apk
+          path: build/app/outputs/flutter-apk/app-release.apk
       
   create-release:
     name: Create Release
-    needs: [build-windows-and-apk, build-ios-and-macos, build-web-and-linux]
+    needs: [build-windows, build-ios-and-macos, build-web-linux-and-apk]
     runs-on: ubuntu-latest
     steps:
     - name: Create Release
