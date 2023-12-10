@@ -34,8 +34,8 @@ jobs:
         name: windows
         path: pidash_windows.zip
 
-  build-ios-and-macos:
-    name: Build iOS and macOS
+  build-ios:
+    name: Build iOS
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
@@ -62,6 +62,20 @@ jobs:
         with:
           name: ios
           path: Payload.ipa
+
+
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: '3.16.3'
+
+      - name: Get dependencies
+        run: flutter pub get
 
       - name: Build macOS
         run: flutter build macos --release
@@ -133,7 +147,7 @@ jobs:
       
   create-release:
     name: Create Release
-    needs: [build-windows, build-ios-and-macos, build-web-linux-and-apk]
+    needs: [build-windows, build-ios, build-macos, build-web-linux-and-apk]
     runs-on: ubuntu-latest
     steps:
     - name: Create Release
