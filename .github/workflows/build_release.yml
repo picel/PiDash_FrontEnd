@@ -144,7 +144,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [web]
+        os: [windows, ios, macos, web, linux, apk]
     steps:
       - name: Download Assets
         uses: actions/download-artifact@v2
