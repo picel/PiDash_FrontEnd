@@ -81,7 +81,7 @@ jobs:
         run: flutter build macos --release
 
       - name: Zip macOS
-        run: 7z a -tzip pidash_macos.zip build/macos/Build/Products/Release/pidash_macos.app
+        run: 7z a -tzip pidash_macos.zip build/macos/Build/Products/Release/pidash.app
 
       - name: Upload macOS
         uses: actions/upload-artifact@v2
