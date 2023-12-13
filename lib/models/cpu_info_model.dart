@@ -2,12 +2,12 @@ class CPUInfoModel {
   final int cpu;
   final String vendorId;
   final String family;
-  final String stepping;
+  final int stepping;
   final String physicalId;
   final int cores;
   final String modelName;
   final double clock;
-  final double cacheSize;
+  final int cacheSize;
 
   CPUInfoModel({
     required this.cpu,
@@ -30,7 +30,7 @@ class CPUInfoModel {
       physicalId: json['physicalId'],
       cores: json['cores'],
       modelName: json['modelName'],
-      clock: json['clock'],
+      clock: json['clock'] * 1.0,
       cacheSize: json['cacheSize'],
     );
   }

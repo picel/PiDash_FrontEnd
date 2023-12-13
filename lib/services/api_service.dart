@@ -12,7 +12,8 @@ class ApiService {
     baseUrl = prefs.getString('ip') ?? baseUrl;
     port = prefs.getString('port') ?? port;
 
-    final response = await http.get(Uri.http('$baseUrl:$port$prefix$route'));
+    var url = Uri.parse('http://$baseUrl:$port$prefix$route');
+    final response = await http.get(url).timeout(const Duration(seconds: 3));
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {

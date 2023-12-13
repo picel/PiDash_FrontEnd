@@ -15,19 +15,19 @@ class GPUInfoModel {
 
   factory GPUInfoModel.fromJson(Map<String, dynamic> json) {
     return GPUInfoModel(
-      productName: json['product_name'],
-      driverVersion: json['driver_version'],
-      totalMemory: json['total_memory'],
-      clock: GPUClockModel.fromJson(json['clock']),
+      productName: json['productName'],
+      driverVersion: json['driverVersion'],
+      totalMemory: json['totalMemory'] * 1.0,
+      clock: GPUClockModel.fromJson(json['maxClock']),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'product_name': productName,
-      'driver_version': driverVersion,
-      'total_memory': totalMemory,
-      'clock': clock.toJson(),
+      'productName': productName,
+      'driverVersion': driverVersion,
+      'totalMemory': totalMemory,
+      'maxClock': clock.toJson(),
     };
   }
 }
