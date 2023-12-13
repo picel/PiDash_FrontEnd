@@ -7,17 +7,16 @@ class ApiService {
   String port = '8080';
   final String prefix = '/api';
 
-  Future<dynamic> fetchCpuData() async {
+  Future<dynamic> fetchData(String route) async {
     var prefs = await SharedPreferences.getInstance();
     baseUrl = prefs.getString('ip') ?? baseUrl;
     port = prefs.getString('port') ?? port;
 
-    final response =
-        await http.get(Uri.http(baseUrl + ':' + port + prefix + '/cpu'));
+    final response = await http.get(Uri.http('$baseUrl:$port$prefix$route'));
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Failed to load CPU data');
+      throw Exception('Failed to load data');
     }
   }
 }

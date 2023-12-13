@@ -20,12 +20,15 @@ class Main extends StatelessWidget {
         primarySwatch: Colors.blueGrey,
         colorScheme: ThemeData.light()
             .colorScheme
-            .copyWith(background: Color(0xffFFF7D4)),
+            .copyWith(background: const Color(0xffFFF7D4)),
       ),
-      home: InitView(),
+      home: const InitView(),
       routes: {
-        '/init': (context) => InitView(),
-        '/realtime': (context) => RealTimeView(),
+        '/init': (context) => const InitView(),
+        '/realtime': (context) {
+          final baseUrl = ModalRoute.of(context)!.settings.arguments as String;
+          return RealTimeView(baseUrl: baseUrl);
+        }
       },
       initialRoute: '/init',
     );

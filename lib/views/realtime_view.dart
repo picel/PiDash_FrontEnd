@@ -1,190 +1,49 @@
-import 'dart:convert';
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:pi_dash/models/gpu_stat_model.dart';
-import 'package:pi_dash/models/mem_stat_model.dart';
-import 'package:pi_dash/models/net_stat_model.dart';
-import 'package:pi_dash/services/ws_service.dart';
+import 'package:pi_dash/utils/FormatUtils.dart';
+import 'package:pi_dash/viewmodels/realtime_viewmodel.dart';
 import 'package:wakelock/wakelock.dart';
 
 class RealTimeView extends StatefulWidget {
-  const RealTimeView({super.key});
+  final String baseUrl;
+
+  const RealTimeView({Key? key, required this.baseUrl}) : super(key: key);
 
   @override
   State<RealTimeView> createState() => _RealTimeViewState();
 }
 
 class _RealTimeViewState extends State<RealTimeView> {
-  final WSService _cpuWebSocket = WSService('/cpu');
-  final WSService _gpuWebSocket = WSService('/gpu');
-  final WSService _memWebSocket = WSService('/mem');
-  final WSService _netWebSocket = WSService('/net');
-
-  List cpuData = [];
-  double cpuAvg = 0.0;
-  bool isAlive = false;
-
-  GPUStatModel gpuData = GPUStatModel.empty();
-  MemStatModel memData = MemStatModel.empty();
-  NetStatModel netData = NetStatModel.empty();
-
-  showDialogBox(bool isFirst) {
-    showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder: (context) {
-        return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: AlertDialog(
-            backgroundColor: Colors.white,
-            title: Text((isFirst) ? 'Start Stream' : 'Reconnect Stream'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  cpuFetch();
-                  gpuFetch();
-                  memFetch();
-                  netFetch();
-                },
-                child: Text(
-                  (isFirst) ? 'Start' : 'Reconnect',
-                  style: TextStyle(
-                    color: Colors.black.withOpacity(0.6),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  cpuFetch() {
-    _cpuWebSocket.stream.listen(
-      (event) {
-        var data = jsonDecode(event);
-        setState(() {
-          cpuData = [];
-          cpuAvg = 0.0;
-          isAlive = true;
-          for (var i = 0; i < data.length; i++) {
-            cpuData.add(data[i] * 1.0);
-            cpuAvg += data[i];
-          }
-          cpuAvg /= data.length;
-        });
-      },
-      onDone: () {
-        if (cpuData.length == 0)
-          showDialogBox(true);
-        else
-          showDialogBox(false);
-        setState(() {
-          cpuData = [];
-          cpuAvg = 0.0;
-          isAlive = false;
-        });
-      },
-    );
-  }
-
-  gpuFetch() {
-    _gpuWebSocket.stream.listen(
-      (event) {
-        var data = jsonDecode(event);
-        setState(() {
-          isAlive = true;
-          gpuData = GPUStatModel.fromJson(data);
-        });
-      },
-      onDone: () {
-        setState(() {
-          gpuData = GPUStatModel.empty();
-          isAlive = false;
-        });
-      },
-    );
-  }
-
-  memFetch() {
-    _memWebSocket.stream.listen(
-      (event) {
-        var data = jsonDecode(event);
-        setState(() {
-          isAlive = true;
-          memData = MemStatModel.fromJson(data);
-        });
-      },
-      onDone: () {
-        setState(() {
-          memData = MemStatModel.empty();
-          isAlive = false;
-        });
-      },
-    );
-  }
-
-  netFetch() {
-    _netWebSocket.stream.listen(
-      (event) {
-        var data = jsonDecode(event);
-        setState(() {
-          isAlive = true;
-          netData = NetStatModel.fromJson(data);
-        });
-      },
-      onDone: () {
-        setState(() {
-          netData = NetStatModel.empty();
-          isAlive = false;
-        });
-      },
-    );
-  }
-
-  byteCountDecimal(byteCount) {
-    var bytes = byteCount;
-    var unit = 'B';
-    if (bytes >= 1024) {
-      bytes /= 1024;
-      unit = 'KB';
-    }
-    if (bytes >= 1024) {
-      bytes /= 1024;
-      unit = 'MB';
-    }
-    if (bytes >= 1024) {
-      bytes /= 1024;
-      unit = 'GB';
-    }
-    if (bytes >= 1024) {
-      bytes /= 1024;
-      unit = 'TB';
-    }
-    return '${bytes.toStringAsFixed(2)}$unit';
-  }
+  late RealTimeViewModel viewModel;
 
   @override
   void initState() {
     super.initState();
     Wakelock.enable();
 
-    cpuFetch();
-    gpuFetch();
-    memFetch();
-    netFetch();
+    viewModel = RealTimeViewModel(
+      onUpdate: () {
+        setState(() {});
+      },
+      onStreamError: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Connection closed'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+        Navigator.of(context).pushReplacementNamed('/init');
+      },
+    );
+    viewModel.init(widget.baseUrl);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      child: Column(
+    return Scaffold(
+      body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           Row(
@@ -193,7 +52,7 @@ class _RealTimeViewState extends State<RealTimeView> {
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  color: Color(0xff5b8e7d),
+                  color: const Color(0xff5b8e7d),
                 ),
                 padding: EdgeInsets.symmetric(
                   horizontal: MediaQuery.of(context).size.width * 0.025,
@@ -212,15 +71,15 @@ class _RealTimeViewState extends State<RealTimeView> {
                           style: TextStyle(
                             fontSize: MediaQuery.of(context).size.height * 0.04,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xffecf39e),
+                            color: const Color(0xffecf39e),
                           ),
                         ),
                         Text(
-                          '${cpuAvg.toStringAsFixed(2)}%',
+                          '${viewModel.cpuAvg.toStringAsFixed(2)}%',
                           style: TextStyle(
                             fontSize: MediaQuery.of(context).size.height * 0.04,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xffecf39e),
+                            color: const Color(0xffecf39e),
                           ),
                         ),
                       ],
@@ -235,22 +94,22 @@ class _RealTimeViewState extends State<RealTimeView> {
                           barTouchData: BarTouchData(
                             enabled: false,
                           ),
-                          gridData: FlGridData(show: false),
+                          gridData: const FlGridData(show: false),
                           borderData: FlBorderData(show: false),
                           titlesData: FlTitlesData(
                               show: true,
-                              leftTitles: AxisTitles(
+                              leftTitles: const AxisTitles(
                                   sideTitles: SideTitles(showTitles: false)),
-                              rightTitles: AxisTitles(
+                              rightTitles: const AxisTitles(
                                   sideTitles: SideTitles(showTitles: false)),
-                              topTitles: AxisTitles(
+                              topTitles: const AxisTitles(
                                   sideTitles: SideTitles(showTitles: false)),
                               bottomTitles: AxisTitles(
                                 sideTitles: SideTitles(
                                   showTitles: true,
                                   getTitlesWidget: (value, meta) {
                                     var style = TextStyle(
-                                      color: Color(0xffecf39e),
+                                      color: const Color(0xffecf39e),
                                       fontWeight: FontWeight.bold,
                                       fontSize:
                                           MediaQuery.of(context).size.height *
@@ -268,16 +127,16 @@ class _RealTimeViewState extends State<RealTimeView> {
                                 ),
                               )),
                           barGroups: [
-                            for (int i = 0; i < cpuData.length; i++)
+                            for (int i = 0; i < viewModel.cpuData.cpuCount; i++)
                               BarChartGroupData(
                                 x: i,
                                 barRods: [
                                   BarChartRodData(
                                     width: MediaQuery.of(context).size.width *
                                         0.25 /
-                                        cpuData.length,
-                                    toY: cpuData[i],
-                                    color: Color(0xffecf39e),
+                                        viewModel.cpuData.cpuCount,
+                                    toY: viewModel.cpuData.loads[i] * 1.0,
+                                    color: const Color(0xffecf39e),
                                     backDrawRodData: BackgroundBarChartRodData(
                                       show: true,
                                       toY: 100,
@@ -298,7 +157,7 @@ class _RealTimeViewState extends State<RealTimeView> {
                 width: MediaQuery.of(context).size.width * 0.45,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  color: Color(0xffa3b18a),
+                  color: const Color(0xffa3b18a),
                 ),
                 padding: EdgeInsets.symmetric(
                   horizontal: MediaQuery.of(context).size.width * 0.025,
@@ -313,15 +172,15 @@ class _RealTimeViewState extends State<RealTimeView> {
                       style: TextStyle(
                         fontSize: MediaQuery.of(context).size.height * 0.04,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xff344e41),
+                        color: const Color(0xff344e41),
                       ),
                     ),
                     Text(
-                      'Core ${gpuData.utilization.gpu.toStringAsFixed(2)}%',
+                      'Core ${viewModel.gpuData.utilization.gpu.toStringAsFixed(2)}%',
                       style: TextStyle(
                         fontSize: MediaQuery.of(context).size.height * 0.03,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xff344e41),
+                        color: const Color(0xff344e41),
                       ),
                     ),
                     SizedBox(
@@ -338,10 +197,10 @@ class _RealTimeViewState extends State<RealTimeView> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: AnimatedContainer(
-                              duration: Duration(milliseconds: 500),
+                              duration: const Duration(milliseconds: 500),
                               curve: Curves.easeInOut,
                               width: max(
-                                gpuData.utilization.gpu /
+                                viewModel.gpuData.utilization.gpu /
                                     100 *
                                     MediaQuery.of(context).size.width *
                                     0.4,
@@ -352,7 +211,7 @@ class _RealTimeViewState extends State<RealTimeView> {
                                   10,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(20),
-                                color: Color(0xff344e41),
+                                color: const Color(0xff344e41),
                               ),
                             ),
                           ),
@@ -360,11 +219,11 @@ class _RealTimeViewState extends State<RealTimeView> {
                       ),
                     ),
                     Text(
-                      'Memory ${gpuData.utilization.memory.toStringAsFixed(2)}%',
+                      'Memory ${viewModel.gpuData.utilization.memory.toStringAsFixed(2)}%',
                       style: TextStyle(
                         fontSize: MediaQuery.of(context).size.height * 0.03,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xff344e41),
+                        color: const Color(0xff344e41),
                       ),
                     ),
                     SizedBox(
@@ -381,10 +240,10 @@ class _RealTimeViewState extends State<RealTimeView> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: AnimatedContainer(
-                              duration: Duration(milliseconds: 500),
+                              duration: const Duration(milliseconds: 500),
                               curve: Curves.easeInOut,
                               width: max(
-                                gpuData.utilization.memory /
+                                viewModel.gpuData.utilization.memory /
                                     100 *
                                     MediaQuery.of(context).size.width *
                                     0.4,
@@ -395,7 +254,7 @@ class _RealTimeViewState extends State<RealTimeView> {
                                   10,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(20),
-                                color: Color(0xff344e41),
+                                color: const Color(0xff344e41),
                               ),
                             ),
                           ),
@@ -403,11 +262,11 @@ class _RealTimeViewState extends State<RealTimeView> {
                       ),
                     ),
                     Text(
-                      'Temperature ${gpuData.temperature.toStringAsFixed(2)}°C',
+                      'Temperature ${viewModel.gpuData.temperature.toStringAsFixed(2)}°C',
                       style: TextStyle(
                         fontSize: MediaQuery.of(context).size.height * 0.03,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xff344e41),
+                        color: const Color(0xff344e41),
                       ),
                     ),
                     SizedBox(
@@ -424,10 +283,10 @@ class _RealTimeViewState extends State<RealTimeView> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: AnimatedContainer(
-                              duration: Duration(milliseconds: 500),
+                              duration: const Duration(milliseconds: 500),
                               curve: Curves.easeInOut,
                               width: max(
-                                gpuData.temperature /
+                                viewModel.gpuData.temperature /
                                     100 *
                                     MediaQuery.of(context).size.width *
                                     0.4,
@@ -438,9 +297,9 @@ class _RealTimeViewState extends State<RealTimeView> {
                                   10,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(20),
-                                color: (gpuData.temperature > 80)
+                                color: (viewModel.gpuData.temperature > 80)
                                     ? Colors.red
-                                    : (gpuData.temperature > 50)
+                                    : (viewModel.gpuData.temperature > 50)
                                         ? Colors.yellow
                                         : Colors.green,
                               ),
@@ -450,11 +309,11 @@ class _RealTimeViewState extends State<RealTimeView> {
                       ),
                     ),
                     Text(
-                      'Power ${gpuData.power.usage.toStringAsFixed(2)}W/${gpuData.power.limit.toStringAsFixed(2)}W',
+                      'Power ${viewModel.gpuData.power.usage.toStringAsFixed(2)}W/${viewModel.gpuData.power.limit.toStringAsFixed(2)}W',
                       style: TextStyle(
                         fontSize: MediaQuery.of(context).size.height * 0.03,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xff344e41),
+                        color: const Color(0xff344e41),
                       ),
                     ),
                     SizedBox(
@@ -471,15 +330,15 @@ class _RealTimeViewState extends State<RealTimeView> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: AnimatedContainer(
-                              duration: Duration(milliseconds: 500),
+                              duration: const Duration(milliseconds: 500),
                               curve: Curves.easeInOut,
-                              width: (gpuData.power.limit == 0)
+                              width: (viewModel.gpuData.power.limit == 0)
                                   ? MediaQuery.of(context).size.height *
                                       0.25 /
                                       10
                                   : max(
-                                      gpuData.power.usage /
-                                          gpuData.power.limit *
+                                      viewModel.gpuData.power.usage /
+                                          viewModel.gpuData.power.limit *
                                           MediaQuery.of(context).size.width *
                                           0.4,
                                       MediaQuery.of(context).size.height *
@@ -491,15 +350,15 @@ class _RealTimeViewState extends State<RealTimeView> {
                                   10,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(20),
-                                color:
-                                    (gpuData.power.usage / gpuData.power.limit >
-                                            0.8)
-                                        ? Colors.red
-                                        : (gpuData.power.usage /
-                                                    gpuData.power.limit >
-                                                0.5)
-                                            ? Colors.yellow
-                                            : Color(0xff344e41),
+                                color: (viewModel.gpuData.power.usage /
+                                            viewModel.gpuData.power.limit >
+                                        0.8)
+                                    ? Colors.red
+                                    : (viewModel.gpuData.power.usage /
+                                                viewModel.gpuData.power.limit >
+                                            0.5)
+                                        ? Colors.yellow
+                                        : const Color(0xff344e41),
                               ),
                             ),
                           ),
@@ -528,16 +387,16 @@ class _RealTimeViewState extends State<RealTimeView> {
                                   fontSize:
                                       MediaQuery.of(context).size.height * 0.02,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xff344e41),
+                                  color: const Color(0xff344e41),
                                 ),
                               ),
                               Text(
-                                gpuData.clock.smClock,
+                                viewModel.gpuData.clock.smClock,
                                 style: TextStyle(
                                   fontSize:
                                       MediaQuery.of(context).size.height * 0.02,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xff344e41),
+                                  color: const Color(0xff344e41),
                                 ),
                               ),
                             ],
@@ -551,16 +410,16 @@ class _RealTimeViewState extends State<RealTimeView> {
                                   fontSize:
                                       MediaQuery.of(context).size.height * 0.02,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xff344e41),
+                                  color: const Color(0xff344e41),
                                 ),
                               ),
                               Text(
-                                gpuData.clock.memClock,
+                                viewModel.gpuData.clock.memClock,
                                 style: TextStyle(
                                   fontSize:
                                       MediaQuery.of(context).size.height * 0.02,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xff344e41),
+                                  color: const Color(0xff344e41),
                                 ),
                               ),
                             ],
@@ -574,16 +433,16 @@ class _RealTimeViewState extends State<RealTimeView> {
                                   fontSize:
                                       MediaQuery.of(context).size.height * 0.02,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xff344e41),
+                                  color: const Color(0xff344e41),
                                 ),
                               ),
                               Text(
-                                gpuData.clock.videoClock,
+                                viewModel.gpuData.clock.videoClock,
                                 style: TextStyle(
                                   fontSize:
                                       MediaQuery.of(context).size.height * 0.02,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xff344e41),
+                                  color: const Color(0xff344e41),
                                 ),
                               ),
                             ],
@@ -597,16 +456,16 @@ class _RealTimeViewState extends State<RealTimeView> {
                                   fontSize:
                                       MediaQuery.of(context).size.height * 0.02,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xff344e41),
+                                  color: const Color(0xff344e41),
                                 ),
                               ),
                               Text(
-                                gpuData.clock.graphicsClock,
+                                viewModel.gpuData.clock.graphicsClock,
                                 style: TextStyle(
                                   fontSize:
                                       MediaQuery.of(context).size.height * 0.02,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xff344e41),
+                                  color: const Color(0xff344e41),
                                 ),
                               ),
                             ],
@@ -622,7 +481,7 @@ class _RealTimeViewState extends State<RealTimeView> {
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              color: Color(0xff4a4e69),
+              color: const Color(0xff4a4e69),
             ),
             padding: EdgeInsets.symmetric(
               horizontal: MediaQuery.of(context).size.width * 0.025,
@@ -641,15 +500,15 @@ class _RealTimeViewState extends State<RealTimeView> {
                       style: TextStyle(
                         fontSize: MediaQuery.of(context).size.height * 0.04,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xffc9ada7),
+                        color: const Color(0xffc9ada7),
                       ),
                     ),
                     Text(
-                      '${byteCountDecimal(memData.used)} / ${byteCountDecimal(memData.total)}',
+                      '${FormatUtils.byteCountDecimal(viewModel.memData.used)} / ${FormatUtils.byteCountDecimal(viewModel.memData.total)}',
                       style: TextStyle(
                         fontSize: MediaQuery.of(context).size.height * 0.04,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xffc9ada7),
+                        color: const Color(0xffc9ada7),
                       ),
                     ),
                   ],
@@ -669,13 +528,13 @@ class _RealTimeViewState extends State<RealTimeView> {
                       Align(
                         alignment: Alignment.centerLeft,
                         child: AnimatedContainer(
-                          duration: Duration(milliseconds: 500),
+                          duration: const Duration(milliseconds: 500),
                           curve: Curves.easeInOut,
-                          width: (memData.total == 0)
+                          width: (viewModel.memData.total == 0)
                               ? 0
                               : max(
-                                  memData.used /
-                                      memData.total *
+                                  viewModel.memData.used /
+                                      viewModel.memData.total *
                                       MediaQuery.of(context).size.width *
                                       0.8,
                                   MediaQuery.of(context).size.height *
@@ -685,7 +544,7 @@ class _RealTimeViewState extends State<RealTimeView> {
                           height:
                               MediaQuery.of(context).size.height * 0.25 / 10,
                           decoration: BoxDecoration(
-                            color: Color(0xffc9ada7),
+                            color: const Color(0xffc9ada7),
                             borderRadius: BorderRadius.circular(20),
                           ),
                         ),
@@ -699,7 +558,7 @@ class _RealTimeViewState extends State<RealTimeView> {
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              color: Color(0xff463f3a),
+              color: const Color(0xff463f3a),
             ),
             padding: EdgeInsets.symmetric(
               horizontal: MediaQuery.of(context).size.width * 0.025,
@@ -720,16 +579,16 @@ class _RealTimeViewState extends State<RealTimeView> {
                           children: [
                             Icon(
                               Icons.arrow_upward_outlined,
-                              color: Color(0xffbcb8b1),
+                              color: const Color(0xffbcb8b1),
                               size: MediaQuery.of(context).size.height * 0.04,
                             ),
                             Text(
-                              '${byteCountDecimal(netData.txSpeed)}/s',
+                              '${FormatUtils.byteCountDecimal(viewModel.netData.txSpeed)}/s',
                               style: TextStyle(
                                 fontSize:
                                     MediaQuery.of(context).size.height * 0.04,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xffbcb8b1),
+                                color: const Color(0xffbcb8b1),
                               ),
                             ),
                           ],
@@ -738,16 +597,16 @@ class _RealTimeViewState extends State<RealTimeView> {
                           children: [
                             Icon(
                               Icons.arrow_downward_outlined,
-                              color: Color(0xffbcb8b1),
+                              color: const Color(0xffbcb8b1),
                               size: MediaQuery.of(context).size.height * 0.04,
                             ),
                             Text(
-                              '${byteCountDecimal(netData.rxSpeed)}/s',
+                              '${FormatUtils.byteCountDecimal(viewModel.netData.rxSpeed)}/s',
                               style: TextStyle(
                                 fontSize:
                                     MediaQuery.of(context).size.height * 0.04,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xffbcb8b1),
+                                color: const Color(0xffbcb8b1),
                               ),
                             ),
                           ],
@@ -757,13 +616,13 @@ class _RealTimeViewState extends State<RealTimeView> {
                     Align(
                       alignment: Alignment.center,
                       child: Text(
-                        (netData.interface == '')
+                        (viewModel.netData.interface == '')
                             ? 'No Traffic'
-                            : netData.interface,
+                            : viewModel.netData.interface,
                         style: TextStyle(
                           fontSize: MediaQuery.of(context).size.height * 0.04,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xffbcb8b1),
+                          color: const Color(0xffbcb8b1),
                         ),
                       ),
                     ),

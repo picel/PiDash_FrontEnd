@@ -35,7 +35,8 @@ class _InitViewState extends State<InitView> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    return Scaffold(
+        body: Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
@@ -98,7 +99,12 @@ class _InitViewState extends State<InitView> {
                     }
 
                     setSharedPrefs().then((value) {
-                      Navigator.pushNamed(context, '/realtime');
+                      Navigator.pushNamed(
+                        context,
+                        '/realtime',
+                        arguments:
+                            ipController.text + ':' + portController.text,
+                      );
                     });
                   },
                   child: const Text('Connect'),
@@ -108,6 +114,6 @@ class _InitViewState extends State<InitView> {
           ),
         ],
       ),
-    );
+    ));
   }
 }
