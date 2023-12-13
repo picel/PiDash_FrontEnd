@@ -10,8 +10,6 @@ class WSService {
   }
 
   Future<void> initialize() async {
-    print('Initializing WebSocket');
-    print('Connecting to $baseUrl');
     connect(); // 초기화 후 연결
   }
 
