@@ -110,7 +110,6 @@ class _RealTimeViewState extends State<RealTimeView> {
                                   getTitlesWidget: (value, meta) {
                                     var style = TextStyle(
                                       color: const Color(0xffecf39e),
-                                      fontWeight: FontWeight.bold,
                                       fontSize:
                                           MediaQuery.of(context).size.height *
                                               0.025,
